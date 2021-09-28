@@ -1,0 +1,81 @@
+- name: Install Midnight Commander
+  package:
+    name: mc
+    state: present
+
+- name: Install Ncdu
+  package:
+    name: ncdu
+    state: present
+
+- name: Make Midnight Commander exit to its current directory
+  lineinfile:
+    dest: "{{ item }}/.bashrc"
+    line: "alias mc='. /usr/share/mc/bin/mc-wrapper.sh'"
+    state: present
+  loop:
+    - "/home/{{ server_user }}"
+    - "/root"
+
+- name: Install VIM
+  package:
+    name: vim
+    state: present
+
+- name: Set VIM as default editor
+  lineinfile:
+    dest: "{{ item }}/.bashrc"
+    line: "export EDITOR=vim;"
+    state: present
+  loop:
+    - "/home/{{ server_user }}"
+    - "/root"
+
+- name: Install GIT
+  package:
+    name: git
+    state: present
+
+- name: Set default GIT username
+  git_config:
+    name: "user.name"
+    scope: global
+    value: "{{ server_user_full_name }}"
+    state: present
+  become: yes
+  become_user: "{{ server_user }}"
+
+- name: Set default GIT email
+  git_config:
+    name: "user.email"
+    scope: global
+    value: "{{ server_user_email }}"
+    state: present
+  become: yes
+  become_user: "{{ server_user }}"
+
+- name: Install ZIP
+  package:
+    name: zip
+    state: present
+
+- name: Install UNZIP
+  package:
+    name: unzip
+    state: present
+
+- name: Install Snap
+  package:
+    name: snapd
+    state: present
+
+- name: Install Certbot
+  community.general.snap:
+    name: certbot
+    classic: yes
+
+- name: Ensure that the Certbot command can be run
+  file:
+    src: "/snap/bin/certbot"
+    dest: "/usr/bin/certbot"
+    state: link

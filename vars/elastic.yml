@@ -1,0 +1,67 @@
+#-------------------------------------------------------------------------------
+# gnikolovski.system
+#-------------------------------------------------------------------------------
+server_user: "USERNAME"
+server_user_group: "USERNAME"
+server_user_password: "PASSWORD"
+label: "elastic-001"
+
+#-------------------------------------------------------------------------------
+# gnikolovski.apps
+#-------------------------------------------------------------------------------
+server_user_full_name: "FULL NAME"
+server_user_email: "EMAIL"
+
+#-------------------------------------------------------------------------------
+# geerlingguy.htpasswd
+#
+# https://github.com/geerlingguy/ansible-role-htpasswd#nginx-example
+#-------------------------------------------------------------------------------
+htpasswd_credentials:
+  - path: "/etc/nginx/passwdfile"
+    name: "USERNAME"
+    password: "PASSWORD"
+    owner: "root"
+    group: "www-data"
+    mode: "u+rw,g+r"
+
+#-------------------------------------------------------------------------------
+# geerlingguy.security
+#
+# https://github.com/geerlingguy/ansible-role-security#role-variables
+#-------------------------------------------------------------------------------
+security_ssh_port: RANDOM_SSH_PORT
+security_sudoers_passworded:
+  - "{{ server_user }}"
+
+#-------------------------------------------------------------------------------
+# geerlingguy.firewall
+#
+# https://github.com/geerlingguy/ansible-role-firewall#role-variables
+#-------------------------------------------------------------------------------
+firewall_allowed_tcp_ports:
+  - 22
+  - 25
+  - 80
+  - 443
+  - "{{ security_ssh_port }}"
+
+#-------------------------------------------------------------------------------
+# elastic.elasticsearch
+#
+# https://github.com/elastic/ansible-elasticsearch#basic-elasticsearch-configuration
+#-------------------------------------------------------------------------------
+es_version: 6.8.18
+es_config:
+  node.name: "elastic-001"
+
+#-------------------------------------------------------------------------------
+# geerlingguy.nginx
+#
+# https://github.com/geerlingguy/ansible-role-nginx#role-variables
+#-------------------------------------------------------------------------------
+nginx_remove_default_vhost: true
+nginx_user: "{{ server_user }}"
+nginx_vhosts:
+  - server_name: "ELASTICSEARCH_URL"
+    template: "templates/nginx.config.j2"

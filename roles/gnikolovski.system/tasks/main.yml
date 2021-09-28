@@ -1,0 +1,71 @@
+- name: Update packages
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+  tags:
+    - update-packages
+
+- name: Upgrade packages
+  apt:
+    upgrade: dist
+  tags:
+    - update-packages
+
+- name: Create server user group
+  group:
+    name: "{{ server_user_group }}"
+    state: present
+
+- name: Create server user
+  user:
+    name: "{{ server_user }}"
+    groups: "{{ server_user_group }}"
+    password: "{{ server_user_password|password_hash('sha512') }}"
+    shell: /bin/bash
+    generate_ssh_key: yes
+    ssh_key_bits: 4096
+    ssh_key_file: .ssh/id_rsa
+    state: present
+    update_password: on_create
+
+- name: Add authorized key
+  authorized_key:
+    user: "{{ server_user }}"
+    state: present
+    key: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+
+- name: Add environment variable
+  lineinfile:
+    dest: /etc/environment
+    line: "export APP_ENV='{{ label|upper }}'"
+    state: present
+
+- name: Create web log directory
+  file:
+    path: "/var/log/elasticsearch"
+    state: directory
+    mode: "0755"
+
+- name: Set default directory
+  lineinfile:
+    dest: "/home/{{ server_user }}/.bashrc"
+    line: "cd /var/www"
+    state: present
+
+- name: Show the current git branch in terminal
+  blockinfile:
+    path: "{{ item }}/.bashrc"
+    state: present
+    block: |
+      parse_git_branch() {
+        git branch 2> /dev/null | sed -e '/^[^*]/d' -e 's/* \(.*\)/(\1)/'
+      }
+      export PS1="\u@\h \[\e[32m\]\w \[\e[91m\]\$(parse_git_branch)\[\e[00m\]$ "
+  loop:
+    - "/home/{{ server_user }}"
+    - "/root"
+
+- name: Remove file .bash_logout to prevent Gitlab Runner failure
+  file:
+    path: "/home/{{ server_user }}/.bash_logout"
+    state: absent

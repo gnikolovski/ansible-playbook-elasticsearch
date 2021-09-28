@@ -1,0 +1,11 @@
+- hosts: servers
+  become: yes
+
+  roles:
+    - gnikolovski.system
+    - gnikolovski.apps
+    - geerlingguy.htpasswd
+    - geerlingguy.security
+    - geerlingguy.firewall
+    - elastic.elasticsearch
+    - geerlingguy.nginx
